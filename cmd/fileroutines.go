@@ -16,6 +16,9 @@ var Music string = Home_Var + "/Music"
 var Pictures string = Home_Var + "/Pictures"
 var Videos string = Home_Var + "/Videos"
 
+// Doubly linked list implementation
+// This is for future history feature (maybe)
+
 type node struct {
     nextNode *node
 	previousNode *node
@@ -59,14 +62,22 @@ func RemoveTail(head *node){
 
 func PrintNodes(head *node){
     tmp := head
-    for {
-        if tmp == nil {
-            break
-        }
+    for tmp != nil{
         fmt.Printf("%v %v %v %v- ", (*tmp).value, (*tmp).index, (*tmp).nextNode, (*tmp).previousNode)
         tmp = (*tmp).nextNode
     }
     fmt.Printf("\n")
+}
+
+func PathExists(path string) (bool, error){
+    _, err := os.Stat(path) 
+    if err == nil {
+        return true, nil
+    }
+    if os.IsNotExist(err) {
+        return false, nil
+    }
+    return false, err
 }
 
 func SaveFile(file *os.File, dest string){
