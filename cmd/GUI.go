@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
-    "io/fs"
-	//"fmt"
 	"path"
+	"strings"
+
 	//"path/filepath"
 	rlgui "github.com/gen2brain/raylib-go/raygui"
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -16,12 +17,22 @@ var scrollIndex int32 = 0
 var editSaveName bool = false
 var show_warning int = 0
 
-func RenderContentList(pwd *node){
+var dir_entries_scroll_index int32 = 0
+
+
+func GetEntriesNames(pwd *node) []string{
     dir_entries, err := os.ReadDir((*pwd).value)
     if err != nil {
         panic(err)
     }
-    fmt.Println(dir_entries)
+    
+    var name_array []string
+    
+    for _, entry := range dir_entries {
+        name_array = append(name_array, entry.Name())
+    }
+    
+    return name_array
 }
 
 func MainWindow(pwd *node, save_name string, source *os.File){
@@ -52,13 +63,21 @@ func MainWindow(pwd *node, save_name string, source *os.File){
 //				pwd = InsertNewEntry(&pwd, tmp)
 //        }   
         
-        rlgui.TextBox(rl.Rectangle{140, 10, 402, 24}, &(*pwd).value, 128, false)
+        rlgui.TextBox(
+            rl.Rectangle{140, 10, 402, 24}, &pwd.value,
+            128, false)
         
-        if rlgui.TextBox(rl.Rectangle{10, 280, 346, 24}, &save_name, 128, editSaveName) {
+        if rlgui.TextBox(
+            rl.Rectangle{10, 280, 346, 24}, &save_name,
+            128, editSaveName) {
             editSaveName = !editSaveName
         }
 
-        switch rlgui.ListView(rl.Rectangle{10, 40, 120, 184}, "Home;Documents;Downloads;Music;Pictures;Videos", &scrollIndex, -1) {
+        switch rlgui.ListView(
+            rl.Rectangle{10, 40, 120, 184},
+            "Home;Documents;Downloads;Music;Pictures;Videos",
+            &scrollIndex, -1) {
+
             case 0:
                 tmp = CreateNode(Home_Var)
 				pwd = InsertNewEntry(&pwd, tmp)
@@ -79,7 +98,18 @@ func MainWindow(pwd *node, save_name string, source *os.File){
 				pwd = InsertNewEntry(&pwd, tmp)
         } 
 
-        RenderContentList(pwd)
+        file_list_selection := rlgui.ListView(
+            rl.Rectangle{140, 40, 402, 234},
+            strings.Join(GetEntriesNames(pwd), ";"),
+            &dir_entries_scroll_index, -1)
+
+        if file_list_selection >= 0 {
+            tmp = CreateNode(strings.Join(
+                []string{pwd.value,
+                GetEntriesNames(pwd)[file_list_selection]}, "/"))
+            pwd = InsertNewEntry(&pwd, tmp)
+        }
+
 
         save_path := path.Join((*pwd).value, save_name)
 		if rlgui.Button(rl.Rectangle{366, 280, 88, 24}, "Save") {
@@ -90,26 +120,33 @@ func MainWindow(pwd *node, save_name string, source *os.File){
             if exists{
                 show_warning = 1
             }else {
-                if fs.ValidPath(save_path){
+                if !fs.ValidPath(save_path){
                     SaveFile(source, save_path)
-                    break
+                    break gui_execution
                 }else{
+                    fmt.Println(save_path)
                     show_warning = 2
                 }
             }
 		}
         if show_warning == 1 {
-            result := rlgui.MessageBox(rl.Rectangle{151, 90, 250, 100}, "#187#Warning", "Filename already exists. Overwrite it?", "Yes;No")
+            result := rlgui.MessageBox(
+                rl.Rectangle{151, 90, 250, 100}, "#187#Warning",
+                "Filename already exists. Overwrite it?", "Yes;No")
+
             if result == 1 {
                 SaveFile(source, save_path)
                 break gui_execution
             }
-            if result == 0 {
+            if result == 0 || result == 2 {
                 show_warning = 0
             }
         }
         if show_warning == 2{
-            result := rlgui.MessageBox(rl.Rectangle{151, 90, 250, 100}, "#187#Warning", "Invalid file name", "Ok")
+            result := rlgui.MessageBox(
+                rl.Rectangle{151, 90, 250, 100}, "#187#Warning",
+                "Invalid file name", "Ok")
+
             if result >= 0 {
                 show_warning = 0
             }

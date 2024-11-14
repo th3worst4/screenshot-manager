@@ -11,4 +11,4 @@ run:
 test:
 	make build; \
 	cd build; \
-	./screenshot-manager ../assets/ENozMYj-236299004.jpg
+	./screenshot-manager ../assets/hi
