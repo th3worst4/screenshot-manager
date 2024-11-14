@@ -19,22 +19,6 @@ var show_warning int = 0
 
 var dir_entries_scroll_index int32 = 0
 
-
-func GetEntriesNames(pwd *node) []string{
-    dir_entries, err := os.ReadDir((*pwd).value)
-    if err != nil {
-        panic(err)
-    }
-    
-    var name_array []string
-    
-    for _, entry := range dir_entries {
-        name_array = append(name_array, entry.Name())
-    }
-    
-    return name_array
-}
-
 func MainWindow(pwd *node, save_name string, source *os.File){
 	tmp := new(node)
 	
@@ -54,14 +38,6 @@ func MainWindow(pwd *node, save_name string, source *os.File){
         }
 
 //        switch rlgui.ToggleGroup(rl.Rectangle{10, 10, 38.5, 24 }, "#118#;#119#;#121#", -1) {
-//            case 0:
-//                if historyIndex != 0 {
-//                }
-//            case 1:
-//            case 2:
-//                tmp = CreateNode(path.Dir((*pwd).value))
-//				pwd = InsertNewEntry(&pwd, tmp)
-//        }   
         
         rlgui.TextBox(
             rl.Rectangle{140, 10, 402, 24}, &pwd.value,
@@ -104,10 +80,19 @@ func MainWindow(pwd *node, save_name string, source *os.File){
             &dir_entries_scroll_index, -1)
 
         if file_list_selection >= 0 {
-            tmp = CreateNode(strings.Join(
+            tmp_path := strings.Join(
                 []string{pwd.value,
-                GetEntriesNames(pwd)[file_list_selection]}, "/"))
-            pwd = InsertNewEntry(&pwd, tmp)
+                GetEntriesNames(pwd)[file_list_selection]}, "/")
+            file_handler, err := os.Stat(tmp_path)
+            if err != nil {
+                panic(err)
+            }
+            if file_handler.IsDir(){
+                tmp = CreateNode(tmp_path)
+                pwd = InsertNewEntry(&pwd, tmp)
+            }else {
+                save_name = GetEntriesNames(pwd)[file_list_selection]   
+            }
         }
 
 

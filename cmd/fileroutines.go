@@ -102,3 +102,18 @@ func SaveFile(file *os.File, dest string){
 		w.Flush()
 	}
 }
+
+func GetEntriesNames(pwd *node) []string{
+    dir_entries, err := os.ReadDir((*pwd).value)
+    if err != nil {
+        panic(err)
+    }
+    
+    var name_array []string
+    
+    for _, entry := range dir_entries {
+        name_array = append(name_array, entry.Name())
+    }
+    
+    return name_array
+}
