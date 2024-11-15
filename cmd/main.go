@@ -29,5 +29,4 @@ func main(){
     
 	MainWindow(pwd, save_name, file)
     
-    fmt.Println("something")
 }
